@@ -57,7 +57,7 @@ def histogram_equalization(image, values):
     
     return (image_eq, hist_transform)
 
-def plot_histogram(hist, name='', xlabel='Intensidade', ylabel='Freq'):
+def plot_histogram(hist, name='', xlabel='Intensity', ylabel='Frequency'):
     plt.bar(range(256), hist)
     plt.title(name)
     plt.xlabel(xlabel)
@@ -69,18 +69,14 @@ images = os.listdir('dataset/')
 for image in images:
     img = cv2.imread('dataset/'+image)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = resize(img, 512, 512)
+    img = resize(img, 50, 50)
     seg_image = k_means(img)
     
-    #(B, G, R) = cv2.split(seg_image)
-    #img_yuv = cv2.cvtColor(seg_image, cv2.COLOR_BGR2YUV)
-    #img_yuv[:,:,0] = cv2.equalizeHist(img_yuv[:,:,0])
-    # convert the YUV image back to RGB format
-    #img_output = cv2.cvtColor(image_bw, cv2.COLOR_BGR2RGB)
+    (B, G, R) = cv2.split(seg_image)
+    gray_image = 0.2989 * R + 0.587 * G + 0.1141 * B # as defined in the article
 
-    image_bw = cv2.cvtColor(seg_image, cv2.COLOR_BGR2GRAY)
-    image_bw = cv2.equalizeHist(image_bw)
-    cv2.imwrite('results/he'+image, image_bw)
+    gray_image = cv2.equalizeHist(np.uint8(gray_image))
+    cv2.imwrite('results/he'+image, gray_image)
     cv2.imwrite('results/seg'+image, seg_image)
 
     #img_eq, img_t = histogram_equalization(B, values=256)
@@ -89,12 +85,12 @@ for image in images:
     #cv2.imshow("",img_eq)
     
     clahe = cv2.createCLAHE(clipLimit = 5)
-    final_img = clahe.apply(image_bw) + 30
+    final_img = clahe.apply(gray_image) + 30
     cv2.imwrite('results/final'+image, final_img)
 
-    th, im_gray_th_otsu = cv2.threshold(final_img, 128, 192, cv2.THRESH_OTSU)   
-    cv2.imwrite('results/bin'+image, im_gray_th_otsu)
-    #plot_histogram(histeq_img, 'Histograma Equalizado ')
+    _, im_binary_th = cv2.threshold(final_img, 127, 255, cv2.THRESH_BINARY)   
+    cv2.imwrite('results/bin'+image, im_binary_th)
+    #plot_histogram(histeq_img, 'Equalized histogram ')
     #plt.imshow(seg_image)
     #plt.show()
     #cv2.imwrite('results/'+image, seg_image)
